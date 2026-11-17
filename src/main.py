@@ -1,3 +1,4 @@
+import sys
 import os
 import shutil
 import pathlib
@@ -8,22 +9,27 @@ from md_to_html import markdown_to_htmlnode
 
 
 def main():
-    cp_src_to_dest("static", "public")
-    generate_page_recursive("content", "template.html", "public")
+    argv = sys.argv
+    if len(argv) == 1:
+        basepath = "/"
+    else:
+        basepath = argv[1]
+    cp_src_to_dest("static", "docs")
+    generate_page_recursive("content", "template.html", "docs", basepath)
 
-def generate_page_recursive(dir_path_content: str, template_path: str, dest_dir_path: str) -> None:
+def generate_page_recursive(dir_path_content: str, template_path: str, dest_dir_path: str, basepath: str) -> None:
     current_folder_path = pathlib.Path(dir_path_content)
     for child in current_folder_path.iterdir():
         dest = str(child).replace(str(dir_path_content), dest_dir_path)
         if child.is_file():
             dest_path = dest.replace(".md", ".html")
-            generate_page(child, template_path, dest_path)
+            generate_page(child, template_path, dest_path, basepath)
         else:
             if not os.path.exists(dest):
                 os.mkdir(dest)
-            generate_page_recursive(child, template_path, dest)
+            generate_page_recursive(child, template_path, dest, basepath)
 
-def generate_page(from_path: str, template_path: str, dest_path: str) -> None:
+def generate_page(from_path: str, template_path: str, dest_path: str, basepath: str) -> None:
     with open(from_path) as f:
         markdown = f.read()
     with open(template_path) as f:
@@ -31,9 +37,10 @@ def generate_page(from_path: str, template_path: str, dest_path: str) -> None:
     title = extract_title(markdown)
     html = markdown_to_htmlnode(markdown).to_html()
     titled_template = raw_template.replace("{{ Title }}", title)
-    filled_template = titled_template.replace("{{ Content }}", html)
+    content_filled_template = titled_template.replace("{{ Content }}", html)
+    filled_and_basepath_replaced = content_filled_template.replace('href="/', f'href="{basepath}').replace('src="/', f'src="{basepath}')
     with open(dest_path, "w") as f:
-        f.write(filled_template)
+        f.write(filled_and_basepath_replaced)
 
 def cp_src_to_dest(src: str, dest: str) -> None:
     print(f"trying to remove '{dest}' folder")
