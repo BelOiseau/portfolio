@@ -40,6 +40,7 @@ def generate_page(from_path: str, template_path: str, dest_path: str, basepath: 
     content_filled_template = titled_template.replace("{{ Content }}", html)
     filled_and_basepath_replaced = content_filled_template.replace('href="/', f'href="{basepath}').replace('src="/', f'src="{basepath}')
     with open(dest_path, "w") as f:
+        print(f"creating {dest_path}")
         f.write(filled_and_basepath_replaced)
 
 def cp_src_to_dest(src: str, dest: str) -> None:
