@@ -72,8 +72,5 @@ def cp_src_to_dest(src: str, dest: str) -> None:
     except Exception as e:
         print(f"ERROR: {e}")
     
-
-
-
 if __name__ == "__main__":
     main()

@@ -1,5 +1,7 @@
 import re
+import mdformat
 from collections.abc import Callable
+from match_node import *
 from textnode import *
 from htmlnode import LeafNode, ParentNode
 
@@ -99,3 +101,29 @@ def extract_title(markdown: str) -> str | None:
         return title
     except:
         raise Exception("no title found")
+
+def format_md(unformatted_md: str) -> str:
+    matches = MatchList()
+    matches.extend(re.finditer(r'```[^`]*```', unformatted_md), MatchType.CODE)
+    matches.extend(re.finditer(r'(?<=\n)- .*\n(?=- )', unformatted_md), MatchType.BULLET)
+    matches.extend(re.finditer(r'(?<=\n)- .*\n(?!- )', unformatted_md), MatchType.BULLET_END)
+    matches.extend(re.finditer(r'(?<=\n)\d\. .*\n(?=\d\. )', unformatted_md), MatchType.NUM_LIST)
+    matches.extend(re.finditer(r'(?<=\n)\d\. .*\n(?!\d\. )', unformatted_md), MatchType.NUM_LIST_END)
+    matches.sort()
+
+    if not matches:
+        return unformatted_md.replace("\n", "\n\n").strip()
+    first_split = True
+    for match in matches:
+        if first_split:
+            splitted_md = unformatted_md.split(match.raw_result, maxsplit=1)
+            splitted_md[0] = splitted_md[0].replace("\n", "\n\n")
+            splitted_md.insert(1, match.result)
+            first_split = False
+        else:
+            next_split = splitted_md.pop()
+            next_split = next_split.split(match.raw_result, maxsplit=1)
+            next_split[0] = next_split[0].replace("\n", "\n\n")
+            next_split.insert(1, match.result)
+            splitted_md.extend(next_split)
+    return "".join(splitted_md).strip()
