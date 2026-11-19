@@ -1,2 +1,2 @@
-uv run src/update.py
+uv run src/update_content.py
 uv run src/main.py "/portfolio/"
